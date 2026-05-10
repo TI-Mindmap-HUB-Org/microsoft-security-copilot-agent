@@ -192,35 +192,3 @@ SkillGroups:
             IOC Data: {{IOCData}}
             Context: {{Context}}
             <|im_end|>
-
-# =============================================================================
-# Agent Definitions — Automated Threat Monitoring
-# =============================================================================
-AgentDefinitions:
-  - Name: TIMindmapHubMonitor
-    DisplayName: TI Mindmap Hub Threat Monitor
-    Description: |
-      Automated threat intelligence monitoring agent that periodically checks
-      for new reports from TI Mindmap Hub and analyzes them, providing
-      proactive threat awareness to the security team.
-    Publisher: TI Mindmap Hub
-    Product: ThreatIntelligence
-    RequiredSkillsets:
-      - TIMindmapHub.ThreatIntelligence
-    AgentSingleInstanceConstraint: Workspace
-    Settings:
-      - Name: MonitoringScope
-        Label: Monitoring Scope
-        Description: What to monitor (reports, cves, briefings, all)
-        HintText: "e.g., all"
-        Required: true
-      - Name: SeverityThreshold
-        Label: Minimum Severity
-        Description: Minimum CVE severity to alert on (CRITICAL, HIGH, MEDIUM, LOW)
-        HintText: "e.g., HIGH"
-        Required: false
-    Triggers:
-      - Name: PeriodicThreatCheck
-        DefaultPeriodSeconds: 3600
-        FetchSkill: TIMindmapHub.ThreatIntelligence.list_reports_reports__get
-        ProcessSkill: TIMindmapHub.ThreatIntelligence.ThreatIntelligenceAnalyst
