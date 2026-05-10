@@ -1,0 +1,23 @@
+# Environment / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Secrets
+*.env
+local.settings.json
+api-keys.txt
+
+# Build artifacts
+__pycache__/
+*.pyc
+node_modules/
+dist/
+.terraform/

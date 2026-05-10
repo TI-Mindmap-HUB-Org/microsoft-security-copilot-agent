@@ -1,0 +1,228 @@
+# =============================================================================
+# Microsoft Security Copilot Agent Manifest
+# TI Mindmap Hub — Direct REST API Integration (no proxy required)
+# =============================================================================
+#
+# This manifest connects Security Copilot directly to the TI Mindmap Hub
+# REST API backend using API Key authentication.
+#
+# Deployment:
+#   1. Upload this manifest to Security Copilot (Sources > Custom > Add plugin)
+#   2. Enter your TI Mindmap Hub API key (tim_xxxxxxxxxxxx) when prompted
+#
+# OpenAPI spec is hosted at:
+#   https://raw.githubusercontent.com/TI-Mindmap-HUB-Org/microsoft-security-copilot-agent/main/openapi.yaml
+#
+# Get an API key: https://ti-mindmap-hub.com → My Profile → MCP Server API Keys
+# =============================================================================
+
+Descriptor:
+  Name: TIMindmapHub.ThreatIntelligence
+  DisplayName: TI Mindmap Hub - Threat Intelligence
+  Description: |
+    Query threat intelligence data from TI Mindmap Hub directly. Access
+    curated reports, weekly briefings, IOC search, CVE intelligence with
+    real-time EPSS enrichment, STIX 2.1 bundles, platform statistics,
+    and knowledge graph analysis via the STIX Constellation.
+  SupportedAuthTypes:
+    - ApiKey
+  Authorization:
+    Type: APIKey
+    Key: X-API-Key
+    Location: Header
+    AuthScheme: ""
+
+SkillGroups:
+  # ===========================================================================
+  # API Skills — Direct access to TI Mindmap Hub REST API
+  # ===========================================================================
+  - Format: API
+    Settings:
+      OpenApiSpecUrl: https://raw.githubusercontent.com/TI-Mindmap-HUB-Org/microsoft-security-copilot-agent/main/openapi.yaml
+      EndpointUrl: https://func-timindmap-prod.azurewebsites.net/api
+
+  # ===========================================================================
+  # AGENT Skill — Threat Intelligence Analyst Orchestrator
+  # ===========================================================================
+  - Format: AGENT
+    Skills:
+      - Name: ThreatIntelligenceAnalyst
+        DisplayName: TI Mindmap Hub Threat Analyst
+        Description: |
+          An AI agent that orchestrates threat intelligence analysis using
+          TI Mindmap Hub data. It can investigate threats, correlate IOCs,
+          analyze CVEs, explore attack paths, and provide weekly briefing summaries.
+        Interfaces:
+          - Agent
+        Inputs:
+          - Required: true
+            Name: Query
+            Description: The threat intelligence question or investigation task
+        Settings:
+          Model: gpt-4.1
+          Instructions: |
+            <|im_start|>system
+            You are TI Mindmap Hub Threat Intelligence Analyst — an AI agent
+            that helps security analysts investigate threats using structured
+            intelligence from TI Mindmap Hub.
+
+            You have access to the following tools:
+
+            **Reports:**
+            - list_reports_reports__get: Search and list reports (params: search, tags, source, time_range, limit, offset)
+            - get_report_details_reports__report_id__get: Get full report details (params: report_id)
+            - get_available_sources_reports_sources_get: List all intelligence sources
+            - get_available_tags_reports_tags_get: List all tags
+
+            **Weekly Briefings:**
+            - get_latest_briefing_briefings_latest_get: Most recent weekly briefing
+            - list_briefings_briefings_list_get: List all briefings
+            - get_briefing_by_date_briefings__date_str__get: Briefing for a specific date (params: date_str YYYY-MM-DD)
+
+            **IOC Search:**
+            - search_for_ioc_iocs_search_get: Search for an IOC (params: q — IP, domain, hash, URL)
+
+            **CVE Intelligence:**
+            - search_cve_by_id_cves_search__cve_id__get: Search CVE by ID (params: cve_id e.g. CVE-2024-3400)
+            - search_cves_by_keyword_cves_search_get: Search CVEs by keyword (params: q, limit)
+            - list_cves_cves_list_get: List CVEs with filters (params: page, size, severity, sort_by, sort_order)
+            - get_cves_by_article_cves_by_article__article_id__get: CVEs from a specific article (params: article_id)
+            - get_cve_statistics_cves_statistics_get: CVE statistics
+
+            **STIX Bundles:**
+            - get_stix_bundle_stix_stix_bundle__article_id__get: STIX 2.1 bundle (params: article_id)
+            - list_stix_bundles_stix_stix_bundles_get: List bundles (params: limit, offset)
+            - get_stix_statistics_stix_stix_statistics_get: STIX statistics
+
+            **Statistics & Submissions:**
+            - get_statistics_statistics__get: Platform statistics
+            - submit_article_for_review_submissions__post: Submit URL for analysis (body: {"url": "..."})
+
+            **Knowledge Graph (STIX Constellation):**
+            - kg_search_kg_search_get: Search entities (params: query, entity_type, limit)
+            - kg_cluster_kg_cluster__canon_id__get: Ego-graph around entity (params: canon_id, depth, include_inferred)
+            - kg_timeline_kg_timeline__canon_id__get: Entity timeline (params: canon_id)
+            - kg_attack_path_kg_attack_path_get: Attack path traversal (params: ttp_query, depth)
+            - kg_cross_report_kg_cross_report_get: Cross-report correlation (params: report_id_a, report_id_b)
+            - kg_stats_kg_stats_get: Knowledge graph statistics
+
+            **Investigation Process:**
+            1. Understand the analyst's question
+            2. Choose the right tool(s) to gather data
+            3. For IOCs → use search_for_ioc_iocs_search_get
+            4. For CVEs → use search_cve_by_id or search_cves_by_keyword
+            5. For threat actors → use kg_search then kg_cluster
+            6. For attack paths → use kg_attack_path
+            7. For correlations → use kg_cross_report
+            8. Synthesize findings into a clear, actionable response
+
+            **Response Format:**
+            - Structured, concise answers
+            - Include relevant IOCs, CVEs, and TTPs
+            - Highlight severity and urgency indicators
+            - Suggest follow-up investigation steps
+            - Reference report IDs for traceability
+
+            Always return something useful. If no results, explain what was
+            searched and suggest alternatives.
+            <|im_end|>
+            <|im_start|>user
+            {{Query}}
+            <|im_end|>
+
+        ChildSkills:
+          - list_reports_reports__get
+          - get_report_details_reports__report_id__get
+          - get_available_sources_reports_sources_get
+          - get_available_tags_reports_tags_get
+          - get_latest_briefing_briefings_latest_get
+          - list_briefings_briefings_list_get
+          - get_briefing_by_date_briefings__date_str__get
+          - search_for_ioc_iocs_search_get
+          - search_cve_by_id_cves_search__cve_id__get
+          - search_cves_by_keyword_cves_search_get
+          - list_cves_cves_list_get
+          - get_cves_by_article_cves_by_article__article_id__get
+          - get_cve_statistics_cves_statistics_get
+          - get_stix_bundle_stix_stix_bundle__article_id__get
+          - list_stix_bundles_stix_stix_bundles_get
+          - get_stix_statistics_stix_stix_statistics_get
+          - get_statistics_statistics__get
+          - submit_article_for_review_submissions__post
+          - kg_search_kg_search_get
+          - kg_cluster_kg_cluster__canon_id__get
+          - kg_timeline_kg_timeline__canon_id__get
+          - kg_attack_path_kg_attack_path_get
+          - kg_cross_report_kg_cross_report_get
+          - kg_stats_kg_stats_get
+
+  # ===========================================================================
+  # GPT Skill — IOC Triage Assistant
+  # ===========================================================================
+  - Format: GPT
+    Skills:
+      - Name: IOCTriageSummary
+        DisplayName: IOC Triage Summary
+        Description: |
+          Summarizes IOC search results into a triage-ready format for security
+          analysts, highlighting risk level and recommended actions.
+        Inputs:
+          - Name: IOCData
+            Description: Raw IOC search results from TI Mindmap Hub
+            Required: true
+          - Name: Context
+            Description: Additional context about the investigation
+            Required: false
+        Settings:
+          ModelName: gpt-4.1
+          Template: |-
+            <|im_start|>system
+            You are a threat intelligence triage assistant. Given IOC search results
+            from TI Mindmap Hub, produce a structured triage summary including:
+
+            1. **IOC Classification**: Type (IP/domain/hash/URL) and category
+            2. **Risk Assessment**: High/Medium/Low based on associated reports
+            3. **Associated Threats**: Threat actors, campaigns, malware families
+            4. **Report References**: List of reports mentioning this IOC
+            5. **Recommended Actions**: Immediate steps for the analyst
+
+            Be concise and actionable. Format for rapid analyst consumption.
+            <|im_end|>
+            <|im_start|>user
+            IOC Data: {{IOCData}}
+            Context: {{Context}}
+            <|im_end|>
+
+# =============================================================================
+# Agent Definitions — Automated Threat Monitoring
+# =============================================================================
+AgentDefinitions:
+  - Name: TIMindmapHubMonitor
+    DisplayName: TI Mindmap Hub Threat Monitor
+    Description: |
+      Automated threat intelligence monitoring agent that periodically checks
+      for new reports from TI Mindmap Hub and analyzes them, providing
+      proactive threat awareness to the security team.
+    Publisher: TI Mindmap Hub
+    Product: ThreatIntelligence
+    RequiredSkillsets:
+      - TIMindmapHub.ThreatIntelligence
+    AgentSingleInstanceConstraint: Workspace
+    Settings:
+      - Name: MonitoringScope
+        Label: Monitoring Scope
+        Description: What to monitor (reports, cves, briefings, all)
+        HintText: "e.g., all"
+        SettingType: String
+        Required: true
+      - Name: SeverityThreshold
+        Label: Minimum Severity
+        Description: Minimum CVE severity to alert on (CRITICAL, HIGH, MEDIUM, LOW)
+        HintText: "e.g., HIGH"
+        SettingType: String
+        Required: false
+    Triggers:
+      - Name: PeriodicThreatCheck
+        DefaultPeriodSeconds: 3600
+        FetchSkill: TIMindmapHub.ThreatIntelligence.list_reports_reports__get
+        ProcessSkill: TIMindmapHub.ThreatIntelligence.ThreatIntelligenceAnalyst

@@ -1,0 +1,1199 @@
+openapi: 3.0.1
+info:
+  title: TI Mindmap Hub - Threat Intelligence API
+  description: |
+    Threat Intelligence API for TI Mindmap Hub. Provides access to curated
+    threat intelligence reports, weekly briefings, IOC search, CVE intelligence,
+    STIX 2.1 bundles, platform statistics, and knowledge graph queries
+    powered by the STIX Constellation.
+  version: 1.0.0
+  contact:
+    name: TI Mindmap Hub
+    url: https://docs.ti-mindmap-hub.com/mcp/
+    email: info@ti-mindmap-hub.com
+
+servers:
+  - url: https://func-timindmap-prod.azurewebsites.net/api
+    description: TI Mindmap Hub Production API
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: TI Mindmap Hub API key (format tim_xxxxxxxxxxxx)
+
+  schemas:
+    ReportListItem:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        dashboardSummary:
+          type: string
+        sourceFeedName:
+          type: string
+        articleUrl:
+          type: string
+        ingestionDate:
+          type: string
+          format: date-time
+        publishedDate:
+          type: string
+          format: date-time
+        processingStatus:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    PaginatedReportList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportListItem"
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    ReportDetailItem:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        sourceFeedName:
+          type: string
+        sourceFeedUrl:
+          type: string
+        articleUrl:
+          type: string
+        publishedDate:
+          type: string
+          format: date-time
+        ingestionDate:
+          type: string
+          format: date-time
+        processingStatus:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        blobPathRawArticle:
+          type: string
+        blobPathSummary:
+          type: string
+        blobPathMindmapCode:
+          type: string
+        blobPathIOCs:
+          type: string
+        blobPathTTPsTable:
+          type: string
+        blobPathTTPsExecution:
+          type: string
+        blobPathFiveWhats:
+          type: string
+        blobPathStixBundle:
+          type: string
+        blobPathCVEs:
+          type: string
+
+    WeeklyBriefing:
+      type: object
+      required: [snapshot, deep_dive, feed]
+      properties:
+        week_of:
+          type: string
+        total_threats:
+          type: integer
+        executive_summary:
+          type: object
+          properties:
+            key_takeaway:
+              type: string
+            look_ahead:
+              type: string
+        snapshot:
+          type: object
+        deep_dive:
+          type: object
+        feed:
+          type: array
+          items:
+            type: object
+
+    BriefingInfo:
+      type: object
+      required: [date, file_name]
+      properties:
+        date:
+          type: string
+        file_name:
+          type: string
+
+    CVESearchResult:
+      type: object
+      required: [cve_id, total_mentions]
+      properties:
+        cve_id:
+          type: string
+        description:
+          type: string
+        cvss_v3_score:
+          type: number
+        cvss_v3_severity:
+          type: string
+          enum: [NONE, LOW, MEDIUM, HIGH, CRITICAL]
+        cvss_v3_vector:
+          type: string
+        cwe_id:
+          type: string
+        cwe_name:
+          type: string
+        published_date:
+          type: string
+          format: date-time
+        affected_products:
+          type: array
+          items:
+            type: object
+            properties:
+              vendor:
+                type: string
+              product:
+                type: string
+              versions:
+                type: string
+        total_mentions:
+          type: integer
+        articles:
+          type: array
+          items:
+            type: object
+            properties:
+              article_id:
+                type: string
+              article_title:
+                type: string
+              article_source:
+                type: string
+              mention_date:
+                type: string
+                format: date-time
+        epss_score:
+          type: number
+        epss_percentile:
+          type: number
+        exploit_status:
+          type: string
+
+    CVESearchResponse:
+      type: object
+      required: [results, total, query]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/CVESearchResult"
+        total:
+          type: integer
+        query:
+          type: string
+
+    CVEListResponse:
+      type: object
+      required: [items, total, page, size]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              cve_id:
+                type: string
+              description:
+                type: string
+              cvss_v3_score:
+                type: number
+              cvss_v3_severity:
+                type: string
+              total_mentions:
+                type: integer
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    CVEStatistics:
+      type: object
+      required: [total_cves, cves_last_7_days, cves_last_30_days, severity_distribution]
+      properties:
+        total_cves:
+          type: integer
+        cves_last_7_days:
+          type: integer
+        cves_last_30_days:
+          type: integer
+        severity_distribution:
+          type: object
+          properties:
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+        avg_cvss_score:
+          type: number
+        exploited_in_wild_count:
+          type: integer
+
+    KGStatsResponse:
+      type: object
+      required: [reports, canon_entities, observed_rel, inferred_rel_all, inferred_rel_high_conf, top_entities, type_distribution]
+      properties:
+        reports:
+          type: integer
+        canon_entities:
+          type: integer
+        observed_rel:
+          type: integer
+        inferred_rel_all:
+          type: integer
+        inferred_rel_high_conf:
+          type: integer
+        top_entities:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              type:
+                type: string
+              report_count:
+                type: integer
+        type_distribution:
+          type: array
+          items:
+            type: object
+            properties:
+              entity_class:
+                type: string
+              count:
+                type: integer
+
+    KGSearchResponse:
+      type: object
+      required: [query, total, results]
+      properties:
+        query:
+          type: string
+        entity_type:
+          type: string
+        total:
+          type: integer
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              type:
+                type: string
+              aliases:
+                type: array
+                items:
+                  type: string
+              report_count:
+                type: integer
+
+    KGClusterResponse:
+      type: object
+      required: [canon_id, depth, include_inferred, node_count, edge_count, nodes, edges]
+      properties:
+        canon_id:
+          type: string
+        depth:
+          type: integer
+        include_inferred:
+          type: boolean
+        node_count:
+          type: integer
+        edge_count:
+          type: integer
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              type:
+                type: string
+              aliases:
+                type: array
+                items:
+                  type: string
+        edges:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              target:
+                type: string
+              label:
+                type: string
+              edge_kind:
+                type: string
+              confidence:
+                type: number
+
+    KGTimelineResponse:
+      type: object
+      required: [canon_id, name, type, total_mentions, appearances]
+      properties:
+        canon_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        total_mentions:
+          type: integer
+        appearances:
+          type: array
+          items:
+            type: object
+            properties:
+              report_id:
+                type: string
+              title:
+                type: string
+              date:
+                type: string
+              source:
+                type: string
+
+    KGAttackPathResponse:
+      type: object
+      required: [query, depth, results]
+      properties:
+        query:
+          type: string
+        depth:
+          type: integer
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              ttp_id:
+                type: string
+              ttp_name:
+                type: string
+              connected_entities:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    type:
+                      type: string
+              edges:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                    target:
+                      type: string
+                    label:
+                      type: string
+
+    KGCrossReportResponse:
+      type: object
+      required: [report_id_a, report_id_b, shared_count, shared_entities]
+      properties:
+        report_id_a:
+          type: string
+        report_id_b:
+          type: string
+        shared_count:
+          type: integer
+        shared_entities:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              type:
+                type: string
+
+    SubmissionPayload:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  # ===========================================================================
+  # REPORTS
+  # ===========================================================================
+  /reports/:
+    get:
+      operationId: list_reports_reports__get
+      summary: List processed threat intelligence reports
+      description: |
+        List processed TI reports with enhanced cross-container search.
+        Searches across articles, IOCs, and CVEs when a search term is provided.
+        #ExamplePrompts List recent threat intelligence reports about ransomware
+        #ExamplePrompts Show me TI reports from the last 7 days
+        #ExamplePrompts Find reports tagged with APT29
+        #ExamplePrompts Search for reports mentioning Cobalt Strike
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Search term for report title, source, summary, CVE or IOC
+          schema:
+            type: string
+        - name: source
+          in: query
+          required: false
+          description: Filter reports by a specific sourceFeedName
+          schema:
+            type: string
+        - name: tags
+          in: query
+          required: false
+          description: Filter reports by a comma-separated list of tags
+          schema:
+            type: string
+        - name: time_range
+          in: query
+          required: false
+          description: "Filter by time range: 24h, 7d, or 30d"
+          schema:
+            type: string
+            enum: ["24h", "7d", "30d"]
+        - name: limit
+          in: query
+          required: false
+          description: Number of reports to return per page (max 100)
+          schema:
+            type: integer
+            default: 12
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          required: false
+          description: Offset for pagination
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: Paginated list of reports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedReportList"
+
+  /reports/sources:
+    get:
+      operationId: get_available_sources_reports_sources_get
+      summary: Get list of available report sources
+      description: |
+        Retrieves a distinct list of all sourceFeedName values.
+        #ExamplePrompts What sources does TI Mindmap Hub track?
+        #ExamplePrompts List available threat intelligence sources
+      responses:
+        "200":
+          description: List of source names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /reports/tags:
+    get:
+      operationId: get_available_tags_reports_tags_get
+      summary: Get list of available report tags
+      description: |
+        Retrieves a distinct list of all tag values from processed articles.
+        #ExamplePrompts What tags are available for filtering reports?
+        #ExamplePrompts Show me all report categories
+      responses:
+        "200":
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /reports/{report_id}:
+    get:
+      operationId: get_report_details_reports__report_id__get
+      summary: Get a specific TI report with full details
+      description: |
+        Retrieves detailed information about a specific report including
+        metadata, tags, source info, and SAS URLs for blob content
+        (summary, mindmap, IOCs, TTPs, STIX bundle, CVEs).
+        #ExamplePrompts Get details of this report
+        #ExamplePrompts Show me the full report information for report {report_id}
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          description: The unique identifier of the report
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Full report details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportDetailItem"
+
+  # ===========================================================================
+  # WEEKLY BRIEFINGS
+  # ===========================================================================
+  /briefings/latest:
+    get:
+      operationId: get_latest_briefing_briefings_latest_get
+      summary: Get the most recent weekly threat briefing
+      description: |
+        Returns the latest weekly briefing summarizing the threat landscape
+        including executive summary, snapshot, deep dives, and feed.
+        #ExamplePrompts What's in the latest threat briefing?
+        #ExamplePrompts Give me the weekly threat summary
+        #ExamplePrompts What are the latest cyber threats this week?
+      responses:
+        "200":
+          description: Latest weekly briefing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyBriefing"
+
+  /briefings/list:
+    get:
+      operationId: list_briefings_briefings_list_get
+      summary: List all available weekly briefings
+      description: |
+        Returns a list of all available weekly threat briefings, sorted
+        from most recent.
+        #ExamplePrompts Show me all available weekly briefings
+        #ExamplePrompts List threat briefing history
+      responses:
+        "200":
+          description: List of briefing metadata
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BriefingInfo"
+
+  /briefings/{date_str}:
+    get:
+      operationId: get_briefing_by_date_briefings__date_str__get
+      summary: Get a weekly briefing by date
+      description: |
+        Retrieves a specific weekly briefing by date (format YYYY-MM-DD).
+        #ExamplePrompts Get the briefing from 2024-12-01
+        #ExamplePrompts What threats were reported on a specific date?
+      parameters:
+        - name: date_str
+          in: path
+          required: true
+          description: Date in YYYY-MM-DD format
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Briefing for the specified date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyBriefing"
+
+  # ===========================================================================
+  # IOC SEARCH
+  # ===========================================================================
+  /iocs/search:
+    get:
+      operationId: search_for_ioc_iocs_search_get
+      summary: Search for an Indicator of Compromise (IOC)
+      description: |
+        Searches for a specific IOC value (IP address, domain, URL, or file hash)
+        across all processed threat intelligence articles. Returns matching
+        reports and contextual information.
+        #ExamplePrompts Search for IOC 185.220.101.1
+        #ExamplePrompts Is this domain malicious: evil-domain.com?
+        #ExamplePrompts Look up this hash in threat intelligence
+        #ExamplePrompts Check if this IP is associated with any threats
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: The IOC value to search for (IP, domain, URL, hash)
+          schema:
+            type: string
+            minLength: 3
+      responses:
+        "200":
+          description: IOC search results with matching articles
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ===========================================================================
+  # CVE INTELLIGENCE
+  # ===========================================================================
+  /cves/search/{cve_id}:
+    get:
+      operationId: search_cve_by_id_cves_search__cve_id__get
+      summary: Search for a specific CVE by ID
+      description: |
+        Returns CVE details with all articles that mention it, plus real-time
+        enrichment data including EPSS score and exploit availability status.
+        #ExamplePrompts Look up CVE-2024-3400
+        #ExamplePrompts What is the severity of CVE-2024-21887?
+        #ExamplePrompts Is there an exploit for CVE-2024-3400?
+      parameters:
+        - name: cve_id
+          in: path
+          required: true
+          description: CVE identifier (e.g., CVE-2024-3400)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: CVE details with article references
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CVESearchResult"
+
+  /cves/search:
+    get:
+      operationId: search_cves_by_keyword_cves_search_get
+      summary: Search CVEs by keyword
+      description: |
+        Search CVEs by keyword matching CVE ID, description, vendor, or product.
+        Useful for finding vulnerabilities related to specific technologies.
+        #ExamplePrompts Find CVEs related to Palo Alto
+        #ExamplePrompts Search for remote code execution vulnerabilities
+        #ExamplePrompts What CVEs affect Microsoft Exchange?
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query (CVE ID, keyword, vendor, or product)
+          schema:
+            type: string
+            minLength: 2
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of results (max 100)
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Matching CVEs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CVESearchResponse"
+
+  /cves/list:
+    get:
+      operationId: list_cves_cves_list_get
+      summary: List all CVEs with pagination and filters
+      description: |
+        Returns a paginated list of all CVEs with optional severity
+        and sort filters.
+        #ExamplePrompts List critical CVEs
+        #ExamplePrompts Show me the most recent vulnerabilities
+        #ExamplePrompts What are the highest severity CVEs?
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number (0-indexed)
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          required: false
+          description: Page size (max 100)
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: severity
+          in: query
+          required: false
+          description: "Filter by severity: CRITICAL, HIGH, MEDIUM, LOW"
+          schema:
+            type: string
+            enum: [CRITICAL, HIGH, MEDIUM, LOW]
+        - name: sort_by
+          in: query
+          required: false
+          description: "Sort field: mention_date, cvss_score, cve_id"
+          schema:
+            type: string
+            default: mention_date
+        - name: sort_order
+          in: query
+          required: false
+          description: "Sort order: asc or desc"
+          schema:
+            type: string
+            default: desc
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: Paginated CVE list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CVEListResponse"
+
+  /cves/by-article/{article_id}:
+    get:
+      operationId: get_cves_by_article_cves_by_article__article_id__get
+      summary: Get CVEs for a specific article
+      description: |
+        Returns all CVEs extracted from a specific threat intelligence article.
+        #ExamplePrompts What CVEs are mentioned in this report?
+        #ExamplePrompts Get vulnerabilities from this article
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          description: The article identifier
+          schema:
+            type: string
+      responses:
+        "200":
+          description: CVEs from the article
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /cves/statistics:
+    get:
+      operationId: get_cve_statistics_cves_statistics_get
+      summary: Get CVE statistics
+      description: |
+        Returns comprehensive statistics about CVEs including severity
+        distribution, top vendors, most mentioned CVEs, and exploitation data.
+        #ExamplePrompts How many CVEs has TI Mindmap Hub processed?
+        #ExamplePrompts Show me CVE statistics and severity breakdown
+      responses:
+        "200":
+          description: CVE statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CVEStatistics"
+
+  # ===========================================================================
+  # STIX BUNDLES
+  # ===========================================================================
+  /stix/stix/bundle/{article_id}:
+    get:
+      operationId: get_stix_bundle_stix_stix_bundle__article_id__get
+      summary: Get STIX 2.1 bundle for an article
+      description: |
+        Returns the STIX 2.1 structured threat intelligence bundle for a
+        specific article. Contains threat actors, malware, attack patterns,
+        indicators, vulnerabilities, and their relationships.
+        #ExamplePrompts Get the STIX bundle for this article
+        #ExamplePrompts Export threat intelligence in STIX format
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          description: The article identifier
+          schema:
+            type: string
+      responses:
+        "200":
+          description: STIX 2.1 bundle JSON
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /stix/stix/bundles:
+    get:
+      operationId: list_stix_bundles_stix_stix_bundles_get
+      summary: List all available STIX bundles
+      description: |
+        Returns a list of all STIX bundles available. Bundles can be imported
+        into STIX-compatible platforms like MISP, OpenCTI, or Sentinel.
+        #ExamplePrompts List available STIX bundles
+        #ExamplePrompts How many STIX bundles are available?
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of bundles to return
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          required: false
+          description: Offset for pagination
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of STIX bundles
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /stix/stix/statistics:
+    get:
+      operationId: get_stix_statistics_stix_stix_statistics_get
+      summary: Get STIX generation statistics
+      description: |
+        Returns statistics about STIX bundle generation across the platform.
+        #ExamplePrompts How many STIX objects have been generated?
+        #ExamplePrompts Show STIX statistics
+      responses:
+        "200":
+          description: STIX statistics
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ===========================================================================
+  # STATISTICS & SUBMISSIONS
+  # ===========================================================================
+  /statistics/:
+    get:
+      operationId: get_statistics_statistics__get
+      summary: Get platform statistics
+      description: |
+        Returns overall platform statistics and KPIs about processed
+        reports and IOCs.
+        #ExamplePrompts Show me TI Mindmap Hub platform statistics
+        #ExamplePrompts How many reports has the platform processed?
+      responses:
+        "200":
+          description: Platform statistics
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /submissions/:
+    post:
+      operationId: submit_article_for_review_submissions__post
+      summary: Submit a URL for analysis
+      description: |
+        Submit a threat intelligence article URL for automated analysis.
+        The platform will process it and generate mindmaps, IOCs, STIX
+        bundles, CVE extraction, and TTP mapping.
+        #ExamplePrompts Submit this URL for threat intelligence analysis
+        #ExamplePrompts Analyze this article URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmissionPayload"
+      responses:
+        "202":
+          description: Submission accepted
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ===========================================================================
+  # KNOWLEDGE GRAPH — STIX CONSTELLATION
+  # ===========================================================================
+  /kg/stats:
+    get:
+      operationId: kg_stats_kg_stats_get
+      summary: Get Knowledge Graph statistics
+      description: |
+        Returns graph-wide statistics including entity counts, relationship
+        counts, type distribution, and top entities from the STIX Constellation.
+        #ExamplePrompts How large is the threat intelligence knowledge graph?
+        #ExamplePrompts Show knowledge graph statistics
+      responses:
+        "200":
+          description: Knowledge Graph statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KGStatsResponse"
+
+  /kg/search:
+    get:
+      operationId: kg_search_kg_search_get
+      summary: Search entities in the Knowledge Graph
+      description: |
+        Search canonical entities by name or alias in the STIX Constellation.
+        Supports filtering by entity type (threat-actor, malware, attack-pattern, etc).
+        #ExamplePrompts Search the knowledge graph for APT29
+        #ExamplePrompts Find threat actor Lazarus Group in the graph
+        #ExamplePrompts Look up Cobalt Strike in threat intelligence
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Search term (entity name or alias)
+          schema:
+            type: string
+            minLength: 1
+        - name: entity_type
+          in: query
+          required: false
+          description: Filter by entity class (threat-actor, malware, attack-pattern, indicator, vulnerability)
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Max results (max 100)
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Matching entities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KGSearchResponse"
+
+  /kg/cluster/{canon_id}:
+    get:
+      operationId: kg_cluster_kg_cluster__canon_id__get
+      summary: Get the ego-graph around an entity
+      description: |
+        Returns the local cluster (ego-graph) around a canonical entity in the
+        knowledge graph. Shows all connected entities and relationships within
+        the specified traversal depth.
+        #ExamplePrompts Show me what's connected to this threat actor
+        #ExamplePrompts Get the entity cluster and relationships
+        #ExamplePrompts What entities are related to this malware?
+      parameters:
+        - name: canon_id
+          in: path
+          required: true
+          description: Canonical entity identifier
+          schema:
+            type: string
+        - name: depth
+          in: query
+          required: false
+          description: Traversal depth (1-3)
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+            maximum: 3
+        - name: include_inferred
+          in: query
+          required: false
+          description: Include inferred relationships
+          schema:
+            type: boolean
+            default: false
+        - name: min_inferred_confidence
+          in: query
+          required: false
+          description: Minimum confidence for inferred edges (0.0-1.0)
+          schema:
+            type: number
+            default: 0.7
+            minimum: 0.0
+            maximum: 1.0
+      responses:
+        "200":
+          description: Entity ego-graph with nodes and edges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KGClusterResponse"
+
+  /kg/timeline/{canon_id}:
+    get:
+      operationId: kg_timeline_kg_timeline__canon_id__get
+      summary: Get entity timeline across reports
+      description: |
+        Returns the chronological timeline of an entity's appearances
+        across processed threat intelligence reports.
+        #ExamplePrompts Show me the timeline for this threat actor
+        #ExamplePrompts When was this malware family first seen?
+        #ExamplePrompts Track entity activity over time
+      parameters:
+        - name: canon_id
+          in: path
+          required: true
+          description: Canonical entity identifier
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Entity timeline
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KGTimelineResponse"
+
+  /kg/attack-path:
+    get:
+      operationId: kg_attack_path_kg_attack_path_get
+      summary: Find attack patterns and connected entities
+      description: |
+        Query a TTP (attack pattern) by MITRE ATT&CK ID or name and traverse
+        to connected threat actors, malware, and tools. Maps adversary
+        infrastructure and attack chains.
+        #ExamplePrompts What actors use spearphishing?
+        #ExamplePrompts Find threats using credential dumping techniques
+        #ExamplePrompts Map the attack path for T1566
+      parameters:
+        - name: ttp_query
+          in: query
+          required: true
+          description: TTP external_id (e.g. T1566) or name substring
+          schema:
+            type: string
+            minLength: 1
+        - name: depth
+          in: query
+          required: false
+          description: Traversal depth (1-3)
+          schema:
+            type: integer
+            default: 2
+            minimum: 1
+            maximum: 3
+      responses:
+        "200":
+          description: Attack path results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KGAttackPathResponse"
+
+  /kg/cross-report:
+    get:
+      operationId: kg_cross_report_kg_cross_report_get
+      summary: Find shared entities between two reports
+      description: |
+        Identifies canonical entities that appear in both reports, revealing
+        potential campaign overlaps and threat actor connections.
+        #ExamplePrompts What entities do these two reports share?
+        #ExamplePrompts Find overlaps between report A and report B
+        #ExamplePrompts Are these two incidents related?
+      parameters:
+        - name: report_id_a
+          in: query
+          required: true
+          description: First report identifier
+          schema:
+            type: string
+        - name: report_id_b
+          in: query
+          required: true
+          description: Second report identifier
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Shared entities between reports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KGCrossReportResponse"
+
+  # ===========================================================================
+  # HEALTH CHECK
+  # ===========================================================================
+  /health/health:
+    get:
+      operationId: health_check_health_health_get
+      summary: Health check
+      description: Check API health status.
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object

@@ -1,0 +1,28 @@
+# =============================================================================
+# Simplified API-Only Plugin Manifest (no Agent orchestrator)
+# =============================================================================
+# Use this if you ONLY want direct access to TI Mindmap Hub API skills
+# without the AGENT orchestrator or automated monitoring. Each API operation
+# becomes individually invokable in Security Copilot.
+# =============================================================================
+
+Descriptor:
+  Name: TIMindmapHub.API
+  DisplayName: TI Mindmap Hub
+  Description: |
+    Access TI Mindmap Hub threat intelligence via API. Query reports,
+    weekly briefings, IOCs, CVEs, STIX bundles, statistics, and the
+    STIX Constellation knowledge graph directly from Security Copilot.
+  SupportedAuthTypes:
+    - ApiKey
+  Authorization:
+    Type: APIKey
+    Key: X-API-Key
+    Location: Header
+    AuthScheme: ""
+
+SkillGroups:
+  - Format: API
+    Settings:
+      OpenApiSpecUrl: https://raw.githubusercontent.com/TI-Mindmap-HUB-Org/microsoft-security-copilot-agent/main/openapi.yaml
+      EndpointUrl: https://func-timindmap-prod.azurewebsites.net/api
