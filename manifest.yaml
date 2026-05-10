@@ -213,13 +213,11 @@ AgentDefinitions:
         Label: Monitoring Scope
         Description: What to monitor (reports, cves, briefings, all)
         HintText: "e.g., all"
-        Type: String
         Required: true
       - Name: SeverityThreshold
         Label: Minimum Severity
         Description: Minimum CVE severity to alert on (CRITICAL, HIGH, MEDIUM, LOW)
         HintText: "e.g., HIGH"
-        Type: String
         Required: false
     Triggers:
       - Name: PeriodicThreatCheck
